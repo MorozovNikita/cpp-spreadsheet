@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <iosfwd>
 #include <memory>
 #include <stdexcept>
@@ -33,22 +34,38 @@ struct Size {
     bool operator==(Size rhs) const;
 };
 
+static const std::string INCORRECT_POSITION = "#REF!";
+static const std::string INCORRECT_VALUE = "#VALUE!";
+static const std::string INCORRECT_REF = "ARITM!";
+
 // Описывает ошибки, которые могут возникнуть при вычислении формулы.
 class FormulaError {
 public:
     enum class Category {
         Ref,    // ссылка на ячейку с некорректной позицией
         Value,  // ячейка не может быть трактована как число
-        Div0,  // в результате вычисления возникло деление на ноль
+        Arithmetic,  // в результате вычисления возникло деление на ноль
     };
 
-    FormulaError(Category category);
+    FormulaError(Category category) : category_(category){
+    }
 
-    Category GetCategory() const;
+    Category GetCategory() const{
+        return category_;
+    }
 
-    bool operator==(FormulaError rhs) const;
+    bool operator==(FormulaError rhs) const{
+        return category_ == rhs.category_;
+    }
 
-    std::string_view ToString() const;
+    std::string_view ToString() const{
+        switch (category_) {
+        case Category::Ref: return INCORRECT_REF;
+        case Category::Value: return INCORRECT_VALUE;
+        case Category::Arithmetic: return INCORRECT_POSITION;
+        default: assert(false);
+        }
+    }
 
 private:
     Category category_;
